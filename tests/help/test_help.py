@@ -73,6 +73,16 @@ class TestHelp(unittest.TestCase):
 
         help_coder_run.assert_called_once()
 
+    @classmethod
+    def tearDownClass(cls):
+        # Restore the original HelpCoder.run method
+        if hasattr(cls, '_original_help_coder_run'):
+            aider.coders.HelpCoder.run = cls._original_help_coder_run
+        else:
+            # If we didn't save it, we can't easily restore it, but we should at least try to clean up
+            # In a real scenario, we might want to import the original function
+            pass
+
     def test_init(self):
         help_inst = Help()
         self.assertIsNotNone(help_inst.retriever)
