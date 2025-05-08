@@ -569,7 +569,7 @@ class TestCommands(TestCase):
 
             # Check if the total tokens and remaining tokens are reported
             self.assertTrue(any("tokens total" in line for line in output_lines))
-            self.assertTrue(any("tokens remaining" in line for line in output_lines))
+            self.assertTrue(any("tokens left" in line for line in output_lines))
 
     def test_cmd_add_dirname_with_special_chars(self):
         with ChdirTemporaryDirectory():
@@ -953,6 +953,9 @@ class TestCommands(TestCase):
                                     found_image = True
                                     break
             self.assertTrue(found_image, "Image file not found in messages to LLM")
+
+            # Clean up
+            vision_coder.cur_messages = []
 
     def test_cmd_read_only_with_glob_pattern(self):
         with GitTemporaryDirectory() as repo_dir:
