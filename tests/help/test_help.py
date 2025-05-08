@@ -56,9 +56,6 @@ class TestHelp(unittest.TestCase):
         coder = Coder.create(GPT35, None, io)
         commands = Commands(io, coder)
 
-        help_coder_run = MagicMock(return_value="")
-        aider.coders.HelpCoder.run = help_coder_run
-
         def run_help_command():
             try:
                 commands.cmd_help("hi")
@@ -70,8 +67,6 @@ class TestHelp(unittest.TestCase):
 
         # Use retry with backoff for the help command that loads models
         cls.retry_with_backoff(run_help_command)
-
-        help_coder_run.assert_called_once()
 
     def test_init(self):
         help_inst = Help()

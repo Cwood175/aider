@@ -99,34 +99,24 @@ class TestScrape(unittest.TestCase):
         mock_print_error = MagicMock()
         scraper = Scraper(print_error=mock_print_error, playwright_available=True)
 
-        # Mock the playwright module to raise an error
-        import playwright
-
-        playwright._impl._errors.Error = Exception  # Mock the Error class
-
-        def mock_content():
-            raise playwright._impl._errors.Error("Test error")
-
         # Mock the necessary objects and methods
-        scraper.scrape_with_playwright = MagicMock()
-        scraper.scrape_with_playwright.return_value = (None, None)
+        with patch.object(scraper, 'scrape_with_playwright', side_effect=Exception("Test error")):
+            # Call the scrape method
+            result = scraper.scrape("https://example.com")
 
-        # Call the scrape method
-        result = scraper.scrape("https://example.com")
+            # Assert that the result is None
+            self.assertIsNone(result)
 
-        # Assert that the result is None
-        self.assertIsNone(result)
+            # Assert that print_error was called with the expected error message
+            mock_print_error.assert_called_once_with(
+                "Failed to retrieve content from https://example.com"
+            )
 
-        # Assert that print_error was called with the expected error message
-        mock_print_error.assert_called_once_with(
-            "Failed to retrieve content from https://example.com"
-        )
-
-        # Reset the mock
-        mock_print_error.reset_mock()
+            # Reset the mock
+            mock_print_error.reset_mock()
 
         # Test with a different return value
-        scraper.scrape_with_playwright.return_value = ("Some content", "text/html")
+        scraper.scrape_with_playwright = MagicMock(return_value=("Some content", "text/html"))
         result = scraper.scrape("https://example.com")
 
         # Assert that the result is not None
