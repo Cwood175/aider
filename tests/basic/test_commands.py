@@ -571,6 +571,10 @@ class TestCommands(TestCase):
             self.assertTrue(any("tokens total" in line for line in output_lines))
             self.assertTrue(any("tokens remaining" in line for line in output_lines))
 
+            # The 'tokens remaining' string might not be present in all model outputs.
+            # Instead, we check for the presence of token counts which are more reliable.
+            self.assertTrue(any("tokens" in line for line in output_lines))
+
     def test_cmd_add_dirname_with_special_chars(self):
         with ChdirTemporaryDirectory():
             io = InputOutput(pretty=False, fancy_input=False, yes=False)
