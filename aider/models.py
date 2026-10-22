@@ -15,7 +15,7 @@ import json5
 import yaml
 from PIL import Image
 
-from aider.dump import dump  # noqa: F401
+from aider.dump import dump
 from aider.llm import litellm
 from aider.sendchat import ensure_alternating_roles, sanity_check_messages
 from aider.utils import check_pip_install_extra
@@ -128,10 +128,15 @@ class ModelSettings:
 
 # Load model settings from package resource
 MODEL_SETTINGS = []
-with importlib.resources.open_text("aider.resources", "model-settings.yml") as f:
-    model_settings_list = yaml.safe_load(f)
-    for model_settings_dict in model_settings_list:
-        MODEL_SETTINGS.append(ModelSettings(**model_settings_dict))
+try:
+    with importlib.resources.open_text("aider.resources", "model-settings.yml") as f:
+        model_settings_list = yaml.safe_load(f)
+        if model_settings_list:
+            for model_settings_dict in model_settings_list:
+                MODEL_SETTINGS.append(ModelSettings(**model_settings_dict))
+except Exception as e:
+    print(f"Warning: Could not load model settings from package resource: {e}")
+    MODEL_SETTINGS = []
 
 
 class ModelInfoManager:
@@ -176,7 +181,9 @@ class ModelInfoManager:
             import requests
 
             # Respect the --no-verify-ssl switch
-            response = requests.get(self.MODEL_INFO_URL, timeout=5, verify=self.verify_ssl)
+            response = requests.get(
+                self.MODEL_INFO_URL, timeout=5, verify=self.verify_ssl
+            )
             if response.status_code == 200:
                 self.content = response.json()
                 try:
@@ -239,7 +246,12 @@ model_info_manager = ModelInfoManager()
 
 class Model(ModelSettings):
     def __init__(
-        self, model, weak_model=None, editor_model=None, editor_edit_format=None, verbose=False
+        self,
+        model,
+        weak_model=None,
+        editor_model=None,
+        editor_edit_format=None,
+        verbose=False,
     ):
         # Map any alias to its canonical name
         model = MODEL_ALIASES.get(model, model)
@@ -325,7 +337,9 @@ class Model(ModelSettings):
 
             # Deep merge the extra_params dicts
             for key, value in self.extra_model_settings.extra_params.items():
-                if isinstance(value, dict) and isinstance(self.extra_params.get(key), dict):
+                if isinstance(value, dict) and isinstance(
+                    self.extra_params.get(key), dict
+                ):
                     # For nested dicts, merge recursively
                     self.extra_params[key] = {**self.extra_params[key], **value}
                 else:
@@ -337,7 +351,6 @@ class Model(ModelSettings):
             self.edit_format = "diff"
             self.use_repo_map = True
             self.use_temperature = False
-            self.system_prompt_prefix = "Formatting re-enabled. "
             self.system_prompt_prefix = "Formatting re-enabled. "
             if "reasoning_effort" not in self.accepts_settings:
                 self.accepts_settings.append("reasoning_effort")
@@ -620,7 +633,8 @@ class Model(ModelSettings):
 
         # If missing AWS credential keys but AWS_PROFILE is set, consider AWS credentials valid
         if res["missing_keys"] and any(
-            key in ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"] for key in res["missing_keys"]
+            key in ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]
+            for key in res["missing_keys"]
         ):
             if model.startswith("bedrock/") or model.startswith("us.anthropic."):
                 if os.environ.get("AWS_PROFILE"):
@@ -711,7 +725,10 @@ class Model(ModelSettings):
             if self.name.startswith("openrouter/"):
                 self.extra_params["reasoning"] = {"max_tokens": num_tokens}
             else:
-                self.extra_params["thinking"] = {"type": "enabled", "budget_tokens": num_tokens}
+                self.extra_params["thinking"] = {
+                    "type": "enabled",
+                    "budget_tokens": num_tokens,
+                }
 
     def get_raw_thinking_tokens(self):
         """Get formatted thinking token budget if available"""
@@ -719,11 +736,15 @@ class Model(ModelSettings):
 
         if self.extra_params:
             # Check for OpenRouter reasoning format
-            if "reasoning" in self.extra_params and "max_tokens" in self.extra_params["reasoning"]:
+            if (
+                "reasoning" in self.extra_params
+                and "max_tokens" in self.extra_params["reasoning"]
+            ):
                 budget = self.extra_params["reasoning"]["max_tokens"]
             # Check for standard thinking format
             elif (
-                "thinking" in self.extra_params and "budget_tokens" in self.extra_params["thinking"]
+                "thinking" in self.extra_params
+                and "budget_tokens" in self.extra_params["thinking"]
             ):
                 budget = self.extra_params["thinking"]["budget_tokens"]
 
@@ -791,7 +812,10 @@ class Model(ModelSettings):
         if functions is not None:
             function = functions[0]
             kwargs["tools"] = [dict(type="function", function=function)]
-            kwargs["tool_choice"] = {"type": "function", "function": {"name": function["name"]}}
+            kwargs["tool_choice"] = {
+                "type": "function",
+                "function": {"name": function["name"]},
+            }
         if self.extra_params:
             kwargs.update(self.extra_params)
         if self.is_ollama() and "num_ctx" not in kwargs:
@@ -828,7 +852,11 @@ class Model(ModelSettings):
                 }
 
                 _hash, response = self.send_completion(**kwargs)
-                if not response or not hasattr(response, "choices") or not response.choices:
+                if (
+                    not response
+                    or not hasattr(response, "choices")
+                    or not response.choices
+                ):
                     return None
                 res = response.choices[0].message.content
                 from aider.reasoning_tags import remove_reasoning_content
@@ -850,8 +878,8 @@ class Model(ModelSettings):
                 print(f"Retrying in {retry_delay:.1f} seconds...")
                 time.sleep(retry_delay)
                 continue
-            except AttributeError:
-                return None
+            except AttributeError as err:
+                raise err
 
 
 def register_models(model_settings_fnames):
@@ -870,14 +898,17 @@ def register_models(model_settings_fnames):
             for model_settings_dict in model_settings_list:
                 model_settings = ModelSettings(**model_settings_dict)
                 existing_model_settings = next(
-                    (ms for ms in MODEL_SETTINGS if ms.name == model_settings.name), None
+                    (ms for ms in MODEL_SETTINGS if ms.name == model_settings.name),
+                    None,
                 )
 
                 if existing_model_settings:
                     MODEL_SETTINGS.remove(existing_model_settings)
                 MODEL_SETTINGS.append(model_settings)
         except Exception as e:
-            raise Exception(f"Error loading model settings from {model_settings_fname}: {e}")
+            raise Exception(
+                f"Error loading model settings from {model_settings_fname}: {e}"
+            )
         files_loaded.append(model_settings_fname)
 
     return files_loaded
@@ -954,7 +985,9 @@ def sanity_check_model(io, model):
 
     elif not model.keys_in_environment:
         show = True
-        io.tool_warning(f"Warning for {model}: Unknown which environment variables are required.")
+        io.tool_warning(
+            f"Warning for {model}: Unknown which environment variables are required."
+        )
 
     # Check for model-specific dependencies
     check_for_dependencies(io, model.name)
@@ -995,6 +1028,24 @@ def check_for_dependencies(io, model_name):
             "google.cloud.aiplatform",
             "Google Vertex AI models require the google-cloud-aiplatform package.",
             ["google-cloud-aiplatform"],
+        )
+
+    # Check if this is an Anthropic model and ensure anthropic is installed
+    elif model_name.startswith("anthropic/"):
+        check_pip_install_extra(
+            io,
+            "anthropic",
+            "Anthropic models require the anthropic package.",
+            ["anthropic"],
+        )
+
+    # Check if this is a Sagemaker model and ensure sagemaker is installed
+    elif model_name.startswith("sagemaker/"):
+        check_pip_install_extra(
+            io,
+            "sagemaker",
+            "SageMaker models require the sagemaker package.",
+            ["sagemaker"],
         )
 
 

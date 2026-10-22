@@ -513,10 +513,10 @@ class Commands:
             cost = tk * (self.coder.main_model.info.get("input_cost_per_token") or 0)
             total_cost += cost
             msg = msg.ljust(col_width)
-            self.io.tool_output(f"${cost:7.4f} {fmt(tk)} {msg} {tip}")  # noqa: E231
+            self.io.tool_output(f"${cost:7.4f} {fmt(tk)} {msg} {tip}")
 
         self.io.tool_output("=" * (width + cost_width + 1))
-        self.io.tool_output(f"${total_cost:7.4f} {fmt(total)} tokens total")  # noqa: E231
+        self.io.tool_output(f"${total_cost:7.4f} {fmt(total)} tokens total")
 
         limit = self.coder.main_model.info.get("max_input_tokens") or 0
         if not limit:
@@ -1151,19 +1151,19 @@ class Commands:
         raise CommandCompletionException()
 
     def cmd_ask(self, args):
-        """Ask questions about the code base without editing any files. If no prompt provided, switches to ask mode."""  # noqa
+        """Ask questions about the code base without editing any files. If no prompt provided, switches to ask mode."""
         return self._generic_chat_command(args, "ask")
 
     def cmd_code(self, args):
-        """Ask for changes to your code. If no prompt provided, switches to code mode."""  # noqa
+        """Ask for changes to your code. If no prompt provided, switches to code mode."""
         return self._generic_chat_command(args, self.coder.main_model.edit_format)
 
     def cmd_architect(self, args):
-        """Enter architect/editor mode using 2 different models. If no prompt provided, switches to architect/editor mode."""  # noqa
+        """Enter architect/editor mode using 2 different models. If no prompt provided, switches to architect/editor mode."""
         return self._generic_chat_command(args, "architect")
 
     def cmd_context(self, args):
-        """Enter context mode to see surrounding code context. If no prompt provided, switches to context mode."""  # noqa
+        """Enter context mode to see surrounding code context. If no prompt provided, switches to context mode."""
         return self._generic_chat_command(args, "context", placeholder=args.strip() or None)
 
     def _generic_chat_command(self, args, edit_format, placeholder=None):
@@ -1474,12 +1474,12 @@ class Commands:
             )
             self.io.tool_output(f"Copied last assistant message to clipboard. Preview: {preview}")
         except pyperclip.PyperclipException as e:
-            self.io.tool_error(f"Failed to copy to clipboard: {str(e)}")
+            self.io.tool_error(f"Failed to copy to clipboard: {e!s}")
             self.io.tool_output(
                 "You may need to install xclip or xsel on Linux, or pbcopy on macOS."
             )
         except Exception as e:
-            self.io.tool_error(f"An unexpected error occurred while copying to clipboard: {str(e)}")
+            self.io.tool_error(f"An unexpected error occurred while copying to clipboard: {e!s}")
 
     def cmd_report(self, args):
         "Report a problem by opening a GitHub Issue"
@@ -1595,12 +1595,12 @@ Just show me the edits I need to make.
             pyperclip.copy(markdown)
             self.io.tool_output("Copied code context to clipboard.")
         except pyperclip.PyperclipException as e:
-            self.io.tool_error(f"Failed to copy to clipboard: {str(e)}")
+            self.io.tool_error(f"Failed to copy to clipboard: {e!s}")
             self.io.tool_output(
                 "You may need to install xclip or xsel on Linux, or pbcopy on macOS."
             )
         except Exception as e:
-            self.io.tool_error(f"An unexpected error occurred while copying to clipboard: {str(e)}")
+            self.io.tool_error(f"An unexpected error occurred while copying to clipboard: {e!s}")
 
 
 def expand_subdir(file_path):
