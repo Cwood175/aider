@@ -17,7 +17,9 @@ def sanity_check_messages(messages):
 
         if last_role and role == last_role:
             turns = format_messages(messages)
-            raise ValueError("Messages don't properly alternate user/assistant:\n\n" + turns)
+            raise ValueError(
+                "Messages don't properly alternate user/assistant:\n\n" + turns
+            )
 
         last_role = role
         last_non_system_role = role
@@ -51,9 +53,25 @@ def ensure_alternating_roles(messages):
         # of the opposite role
         if current_role == prev_role:
             if current_role == "user":
-                fixed_messages.append({"role": "assistant", "content": ""})
+                fixed_messages.append(
+                    {
+                        "role": "assistant",
+                        "content": "",
+                        **{
+                            k: v for k, v in msg.items() if k not in ("role", "content")
+                        },
+                    }
+                )
             else:
-                fixed_messages.append({"role": "user", "content": ""})
+                fixed_messages.append(
+                    {
+                        "role": "user",
+                        "content": "",
+                        **{
+                            k: v for k, v in msg.items() if k not in ("role", "content")
+                        },
+                    }
+                )
 
         fixed_messages.append(msg)
         prev_role = current_role

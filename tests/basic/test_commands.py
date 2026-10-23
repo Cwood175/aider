@@ -13,7 +13,7 @@ import pyperclip
 
 from aider.coders import Coder
 from aider.commands import Commands, SwitchCoder
-from aider.dump import dump  # noqa: F401
+from aider.dump import dump
 from aider.io import InputOutput
 from aider.models import Model
 from aider.repo import GitRepo
@@ -2090,7 +2090,6 @@ class TestCommands(TestCase):
             def mock_run(cmd):
                 if cmd.startswith(("/ask", "/model")):
                     raise SwitchCoder()
-                return None
 
             with mock.patch.object(commands, "run", side_effect=mock_run):
                 # Capture tool_error output
@@ -2108,7 +2107,7 @@ class TestCommands(TestCase):
 
     def test_reset_after_coder_clone_preserves_original_read_only_files(self):
         with GitTemporaryDirectory() as _:
-            repo_dir = str(".")
+            repo_dir = "."
             io = InputOutput(pretty=False, fancy_input=False, yes=True)
 
             orig_ro_path = Path(repo_dir) / "orig_ro.txt"
@@ -2150,14 +2149,14 @@ class TestCommands(TestCase):
             # self.assertIn(str(orig_ro_path), new_coder.abs_read_only_fnames)
             self.assertTrue(
                 any(os.path.samefile(p, str(orig_ro_path)) for p in new_coder.abs_read_only_fnames),
-                f"File {str(orig_ro_path)} not found in {new_coder.abs_read_only_fnames}",
+                f"File {orig_ro_path!s} not found in {new_coder.abs_read_only_fnames}",
             )
             self.assertEqual(len(new_coder.done_messages), 0)
             self.assertEqual(len(new_coder.cur_messages), 0)
 
     def test_drop_bare_after_coder_clone_preserves_original_read_only_files(self):
         with GitTemporaryDirectory() as _:
-            repo_dir = str(".")
+            repo_dir = "."
             io = InputOutput(pretty=False, fancy_input=False, yes=True)
 
             orig_ro_path = Path(repo_dir) / "orig_ro.txt"
@@ -2193,7 +2192,7 @@ class TestCommands(TestCase):
             # self.assertIn(str(orig_ro_path), new_coder.abs_read_only_fnames)
             self.assertTrue(
                 any(os.path.samefile(p, str(orig_ro_path)) for p in new_coder.abs_read_only_fnames),
-                f"File {str(orig_ro_path)} not found in {new_coder.abs_read_only_fnames}",
+                f"File {orig_ro_path!s} not found in {new_coder.abs_read_only_fnames}",
             )
             self.assertEqual(new_coder.done_messages, [{"role": "user", "content": "d1"}])
             self.assertEqual(new_coder.cur_messages, [{"role": "user", "content": "c1"}])
